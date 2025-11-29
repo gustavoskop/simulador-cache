@@ -106,6 +106,7 @@ class Cache:
             print("Arquivo não encontrado:", arquivo)
             
         print('\n\n============Resultados=============================')
+        print('Número de acessos: ', i)
         print('Hits: ', self.hit)
         print('Misses compulsórios: ', self.miss_cmpsr)
         print('Misses por colisão: ', self.miss_colis)
