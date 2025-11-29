@@ -15,23 +15,26 @@ class Cache:
     def simular(self):
 
         # O primeiro argumento é algo como: "xx:xx:xx"
-        # config = sys.argv[1]
+        config = sys.argv[1]
 
-        # # Quebra no caractere ':'
-        # nsets_L1, bsize_L1, assoc_L1 = config.split(":")
-        # self.val = [[0] * assoc_L1 for _ in range(nsets_L1)] # zera todos os valores do vetor de validade, de todas as vias (caso a assoc for maior que 1)
-        # self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)] # coloca -1 em todos os valores do vetor da tag, pois nunca terá uma tag -1
+        # Quebra no caractere ':'
+        nsets_L1, bsize_L1, assoc_L1 = config.split(":")
+        nsets_L1, bsize_L1, assoc_L1 = int(nsets_L1), int(bsize_L1), int(assoc_L1) # converte o input para inteiro
+        self.val = [[0] * assoc_L1 for _ in range(nsets_L1)] # zera todos os valores do vetor de validade, de todas as vias (caso a assoc for maior que 1)
+        self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)] # coloca -1 em todos os valores do vetor da tag, pois nunca terá uma tag -1
 
 
-        # # Segundo argumento é o arquivo
-        # arquivo = sys.argv[2]
+        # Segundo argumento é o arquivo
+        arquivo = sys.argv[2]
         
-        nsets_L1 = 8
-        bsize_L1 = 1
-        assoc_L1 = 1
-        self.val = [[0] * assoc_L1 for _ in range(nsets_L1)]
-        self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)]
-        arquivo = 'enderecos.bin'
+        # versão para testes
+        
+        # nsets_L1 = 8
+        # bsize_L1 = 1
+        # assoc_L1 = 1   
+        # self.val = [[0] * assoc_L1 for _ in range(nsets_L1)]
+        # self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)]
+        # arquivo = 'enderecos.bin'
 
         # Mostrando que funcionou
         print("nsets_L1 =", nsets_L1)
