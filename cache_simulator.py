@@ -1,5 +1,4 @@
 import sys
-import struct 
 import math
 import random
 
@@ -83,6 +82,8 @@ class SimuladorCache:
             print("Hits:", c.hit)
             print("Miss compulsórios:", c.miss_cmpsr)
             print("Miss de colisão:", c.miss_colis)
+            print("Miss ratio: ", f'{(c.miss_cmpsr + c.miss_colis) / c.n_acessos:.2f} %')
+            print("Hit ratio: ", f'{c.hit / c.n_acessos:.2f} %')
 
         else:
             for nome, c in [("CACHE DE INSTRUÇÕES", self.Icache), ("CACHE DE DADOS", self.Dcache)]: # para as 2 caches, mostra os resultados
@@ -91,6 +92,8 @@ class SimuladorCache:
                 print("Hits:", c.hit)
                 print("Miss compulsórios:", c.miss_cmpsr)
                 print("Miss de colisão:", c.miss_colis)
+                print("Miss ratio: ", f'{(c.miss_cmpsr + c.miss_colis) / c.n_acessos:.2f} %')
+                print("Hit ratio: ", f'{c.hit / c.n_acessos:.2f} %')
 
 class CacheNivel:
 
