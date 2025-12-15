@@ -25,11 +25,9 @@ class SimuladorCache:
         arquivo = sys.argv[-1] # ultimo argumento
 
         with open(arquivo, "rb") as f:
-            i = 0
-            while i < 40:
-                i += 1
+            while True:
                 dados = f.read(4) # lê 4 bytes
-                print(dados)
+                #print(dados)
                 if len(dados) < 4:
                     break
 
@@ -37,15 +35,15 @@ class SimuladorCache:
                 endereco = int(binario, 2) # transforma em decimal para printar
                 
                 dados = f.read(4) # lê 4 bytes do inteiro que diz se é instrução ou dado
-                print(dados)
+                #print(dados)
                 if len(dados) < 4:
                     break
                 
                 binario_splitted = ''.join(f'{b:08b}' for b in dados) # junta os bytes em 32 bits em uma string
                 endereco_splitted = int(binario_splitted, 2) # transforma em decimal para printar
                 
-                print('binario: ', binario)
-                print('endereco: ', endereco)
+                # print('binario: ', binario)
+                # print('endereco: ', endereco)
 
                 self.despachar_acesso(binario, endereco_splitted) # chama a função para procurar hit ou miss
 
@@ -83,16 +81,16 @@ class SimuladorCache:
             print("CACHE UNIFICADA")
             print("Acessos:", c.n_acessos)
             print("Hits:", c.hit)
-            print("Miss compulsório:", c.miss_cmpsr)
-            print("Miss colisão:", c.miss_colis)
+            print("Miss compulsórios:", c.miss_cmpsr)
+            print("Miss de colisão:", c.miss_colis)
 
         else:
             for nome, c in [("CACHE DE INSTRUÇÕES", self.Icache), ("CACHE DE DADOS", self.Dcache)]: # para as 2 caches, mostra os resultados
                 print(f"\n{nome}")
                 print("Acessos:", c.n_acessos)
                 print("Hits:", c.hit)
-                print("Miss compulsório:", c.miss_cmpsr)
-                print("Miss colisão:", c.miss_colis)
+                print("Miss compulsórios:", c.miss_cmpsr)
+                print("Miss de colisão:", c.miss_colis)
 
 class CacheNivel:
 
@@ -122,6 +120,8 @@ class CacheNivel:
         off = 32 - self.bits_offset # calcula onde fazer o split pra pegar os bits do offset
         ind = off - self.bits_index # calcula onde fazer o split pra pegar os bits do índice
 
+        offset = binario[off:] 
+
         if self.bits_index == 0: # se for total associativa, não faz split no índice
             index = 0 
         else: 
@@ -129,9 +129,9 @@ class CacheNivel:
             
         tag = binario[:ind] # tag é o que sobra
         
-        print("OFFSET: ", off)
-        print("INDICE: ", index)
-        print("TAG: ", tag)
+        # print("OFFSET: ", off)
+        # print("INDICE: ", index)
+        # print("TAG: ", tag)
 
         for via in range(self.assoc): # procura em todas as vias
             if self.val[index][via] and self.tag[index][via] == tag: # se o índice e a tag na cache são iguais ao índice e a tag do endereço, além do bit de validade ser 1, é hit
