@@ -3,115 +3,151 @@ import struct
 import math
 import random
 
-class Cache:
-    
-    def __init__(self): 
-        self.hit = 0 # hits
-        self.miss_cmpsr = 0 # miss compulsório
-        self.miss_colis = 0 # miss por colisão
+class SimuladorCache:
+
+    def __init__(self):
+        self.modo = 0
         self.simular()
-        
-         
+
     def simular(self):
-
-        # O primeiro argumento é algo como: "xx:xx:xx"
-        config = sys.argv[1]
-
-        # Quebra no caractere ':'
-        nsets_L1, bsize_L1, assoc_L1 = config.split(":")
-        nsets_L1, bsize_L1, assoc_L1 = int(nsets_L1), int(bsize_L1), int(assoc_L1) # converte o input para inteiro
-        self.val = [[0] * assoc_L1 for _ in range(nsets_L1)] # zera todos os valores do vetor de validade, de todas as vias (caso a assoc for maior que 1)
-        self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)] # coloca -1 em todos os valores do vetor da tag, pois nunca terá uma tag -1
-
-
-        # Segundo argumento é o arquivo
-        arquivo = sys.argv[2]
         
-        # versão para testes
+        # se tiver 4 argumentos, é splitted
+        if len(sys.argv) == 4:
+            self.modo = 'S'
+            self.criar_split()
+        elif len(sys.argv) == 3: # se tiver 3, é unified
+            self.modo = 'U'
+            self.criar_unified()
+        else:
+            print("ENTRADA INVÁLIDA, USE: \n 'python cache_simulator xx:xx:xx arquivo.bin' para cache unificada \n 'python cache_simulator xxi:xxi:xxi xxd:xxd:xxd' arquivo.bin para cache splitted")
+            return
+
+        arquivo = sys.argv[-1] # ultimo argumento
+
+        with open(arquivo, "rb") as f:
+            i = 0
+            while i < 40:
+                i += 1
+                dados = f.read(4) # lê 4 bytes
+                print(dados)
+                if len(dados) < 4:
+                    break
+
+                binario = ''.join(f'{b:08b}' for b in dados) # junta os bytes em 32 bits em uma string
+                endereco = int(binario, 2) # transforma em decimal para printar
+                
+                dados = f.read(4) # lê 4 bytes do inteiro que diz se é instrução ou dado
+                print(dados)
+                if len(dados) < 4:
+                    break
+                
+                binario_splitted = ''.join(f'{b:08b}' for b in dados) # junta os bytes em 32 bits em uma string
+                endereco_splitted = int(binario_splitted, 2) # transforma em decimal para printar
+                
+                print('binario: ', binario)
+                print('endereco: ', endereco)
+
+                self.despachar_acesso(binario, endereco_splitted) # chama a função para procurar hit ou miss
+
+        self.resultados()
+    
+    def criar_unified(self):
+        n, b, a = map(int, sys.argv[1].split(":")) # numero de conjuntos, tamanho do bloco em bytes e associatividade
+        self.cacheU = CacheNivel(n, b, a) # cria cache unificada
+        self.modo = "U"
         
-        # nsets_L1 = 8
-        # bsize_L1 = 1
-        # assoc_L1 = 1   
-        # self.val = [[0] * assoc_L1 for _ in range(nsets_L1)]
-        # self.tag = [[-1] * assoc_L1 for _ in range(nsets_L1)]
-        # arquivo = 'enderecos.bin'
+    def criar_split(self):
+        nI, bI, aI = map(int, sys.argv[1].split(":"))# numero de conjuntos das instruções, tamanho do bloco em bytes das instruções e associatividade das instruções
+        
+        nD, bD, aD = map(int, sys.argv[2].split(":"))# numero de conjuntos dos dados, tamanho do bloco em bytes dos dados e associatividade dos dados
+        
+        self.Icache = CacheNivel(nI, bI, aI) # cria cache de intruções
+        self.Dcache = CacheNivel(nD, bD, aD) # cria cache de dados
+        self.modo = "S"
+                
+    def despachar_acesso(self, binario, endereco):
+        if self.modo == "U":
+            self.cacheU.acessar(binario)
 
-        # Mostrando que funcionou
-        print("nsets_L1 =", nsets_L1)
-        print("bsize_L1 =", bsize_L1)
-        print("assoc_L1 =", assoc_L1)
-        print("arquivo  =", arquivo)
+        else:
+            if endereco == 0: # se o inteiro for 0, entra na cache de instruções
+                self.Icache.acessar(binario)
+            else:
+                self.Dcache.acessar(binario) # se for 1, entra na cache de dados
+        
+    def resultados(self):
+        print("\n========= RESULTADOS =========")
 
-        try:
-            with open(arquivo, "rb") as f:
-                i = 0
-                while True:
-                    dados = f.read(4) # lê de 4 em 4 bytes
-                    if len(dados) < 4:
-                        break
-                    endereco = struct.unpack("I", dados)[0]# transforma os 4 bytes em inteiro (estava no seguinte formato: b'\x0c\x00\x00\x00')
-                    binario = format(endereco, '032b')# transforma o inteiro em 32 bits (000000....0010)
-                    
-                    
-                    off = 32 - math.log2(int(bsize_L1)) # calcula o numero para usar no split para separar o offset dos 32 bits
-                    ind = 32 - math.log2(int(bsize_L1)) - math.log2(int(nsets_L1)) # calcula o numero para usar no split para separar o indice dos 32 bits
-                                        
-                    offset = binario[int(off):] #separa o offset
-                    
-                    if math.log2(int(nsets_L1)) == 0: # verifica se é totalmente associativo
-                        index = 0
-                    else:
-                        index = int(binario[int(ind):int(off)], 2)# separa o indice
-                        
-                    tag = binario[:int(ind)] # separa a tag
-                    
-                    print(f"Endereco decimal[{i}]: {endereco}")
-                    print(f"Endereco binário[{i}]: {binario}")
-                    print("OFFSET:", offset)
-                    print("INDEX:", index)
-                    print("TAG:", tag)
-                    i += 1
-                    
-                    # procurar hit
-                    hit = False
-                    for via in range(assoc_L1): # compara a tag e a validade em todas as vias procurando o hit
-                        if self.val[index][via] == 1 and self.tag[index][via] == tag:
-                            hit = True
-                            self.hit += 1
-                            break
+        if self.modo == "U": # se for cache unificada, mostra 1 resultado
+            c = self.cacheU
+            print("CACHE UNIFICADA")
+            print("Acessos:", c.n_acessos)
+            print("Hits:", c.hit)
+            print("Miss compulsório:", c.miss_cmpsr)
+            print("Miss colisão:", c.miss_colis)
 
-                    if hit:
-                        continue  # PASSA PARA O PRÓXIMO ENDEREÇO
+        else:
+            for nome, c in [("CACHE DE INSTRUÇÕES", self.Icache), ("CACHE DE DADOS", self.Dcache)]: # para as 2 caches, mostra os resultados
+                print(f"\n{nome}")
+                print("Acessos:", c.n_acessos)
+                print("Hits:", c.hit)
+                print("Miss compulsório:", c.miss_cmpsr)
+                print("Miss colisão:", c.miss_colis)
 
+class CacheNivel:
 
-                    # procurar miss compulsório (via vazia)
-                    way = -1
-                    for via in range(assoc_L1):
-                        if self.val[index][via] == 0:
-                            way = via
-                            break
+    def __init__(self, nsets, bsize, assoc):
+        # método construtor
+        self.nsets = nsets
+        self.bsize = bsize
+        self.assoc = assoc 
+        
+        # inicializa os resultados com 0
+        self.n_acessos = 0
+        self.hit = 0
+        self.miss_cmpsr = 0
+        self.miss_colis = 0
 
-                    if way != -1:
-                        self.miss_cmpsr += 1
-                        self.val[index][way] = 1 # way = via
-                        self.tag[index][way] = tag
-                        continue
+        self.val = [[0] * assoc for _ in range(nsets)] # preenche o bit de validade de todos os conjuntos com 0
+        self.tag = [[-1] * assoc for _ in range(nsets)] # preenche a tag de todos os conjuntos com -1
 
-                    # miss por colisão + substituição randômica
-                    via_sorteada = random.randint(0, assoc_L1 - 1)
-                    self.miss_colis += 1
-                    self.tag[index][via_sorteada] = tag
+        self.bits_offset = int(math.log2(bsize)) # encontra quantos bits de offset são necessários
+        if nsets > 1: # se não for totalmente associativo, calcula os bits de índice nessários
+            self.bits_index  = int(math.log2(nsets)) 
+        else:
+            self.bits_index = 0 # se for totalmente associativo, os bits do índice são 0
 
-        except FileNotFoundError:
-            print("Arquivo não encontrado:", arquivo)
+    def acessar(self, binario):
+        self.n_acessos += 1 # soma mais 1 ao número de acessos
+        off = 32 - self.bits_offset # calcula onde fazer o split pra pegar os bits do offset
+        ind = off - self.bits_index # calcula onde fazer o split pra pegar os bits do índice
+
+        if self.bits_index == 0: # se for total associativa, não faz split no índice
+            index = 0 
+        else: 
+            index = int(binario[ind:off], 2) # se não for total associativa, extrai o byte e transforma em inteiro pro split
             
-        print('\n\n============Resultados=============================')
-        print('Número de acessos: ', i)
-        print('Hits: ', self.hit)
-        print('Misses compulsórios: ', self.miss_cmpsr)
-        print('Misses por colisão: ', self.miss_colis)
-        print('\nHit ratio: ', f'{((self.hit * 100) / i):.2f}%')
-        print('Miss ratio: ', f'{(((self.miss_cmpsr + self.miss_colis) * 100)/ i):.2f}%')
-            
+        tag = binario[:ind] # tag é o que sobra
+        
+        print("OFFSET: ", off)
+        print("INDICE: ", index)
+        print("TAG: ", tag)
 
-Cache()
+        for via in range(self.assoc): # procura em todas as vias
+            if self.val[index][via] and self.tag[index][via] == tag: # se o índice e a tag na cache são iguais ao índice e a tag do endereço, além do bit de validade ser 1, é hit
+                self.hit += 1
+                return
+
+        for via in range(self.assoc):
+            if self.val[index][via] == 0: # se o bit de validade é 0, adiciona um miss compulsório e o endereço na cache
+                self.val[index][via] = 1
+                self.tag[index][via] = tag
+                self.miss_cmpsr += 1
+                return
+            
+        # se val é 1, então foi miss por colisão ou capacidade
+        via = random.randint(0, self.assoc - 1) # substitui alguma via randomicamente
+        self.tag[index][via] = tag
+        self.miss_colis += 1
+
+SimuladorCache()
