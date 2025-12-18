@@ -82,8 +82,8 @@ class SimuladorCache:
             print("Hits:", c.hit)
             print("Miss compulsórios:", c.miss_cmpsr)
             print("Miss de colisão:", c.miss_colis)
-            print("Miss ratio: ", f'{(c.miss_cmpsr + c.miss_colis) / c.n_acessos:.2f} %')
-            print("Hit ratio: ", f'{c.hit / c.n_acessos:.2f} %')
+            print("Miss ratio: ", f'{((c.miss_cmpsr + c.miss_colis) * 100) / c.n_acessos:.2f} %')
+            print("Hit ratio: ", f'{(c.hit * 100) / c.n_acessos:.2f} %')
 
         else:
             for nome, c in [("CACHE DE INSTRUÇÕES", self.Icache), ("CACHE DE DADOS", self.Dcache)]: # para as 2 caches, mostra os resultados
@@ -92,8 +92,8 @@ class SimuladorCache:
                 print("Hits:", c.hit)
                 print("Miss compulsórios:", c.miss_cmpsr)
                 print("Miss de colisão:", c.miss_colis)
-                print("Miss ratio: ", f'{(c.miss_cmpsr + c.miss_colis) / c.n_acessos:.2f} %')
-                print("Hit ratio: ", f'{c.hit / c.n_acessos:.2f} %')
+                print("Miss ratio: ", f'{((c.miss_cmpsr + c.miss_colis) * 100) / c.n_acessos:.2f} %')
+                print("Hit ratio: ", f'{(c.hit * 100) / c.n_acessos:.2f} %')
 
 class CacheNivel:
 
@@ -140,17 +140,14 @@ class CacheNivel:
             if self.val[index][via] and self.tag[index][via] == tag: # se o índice e a tag na cache são iguais ao índice e a tag do endereço, além do bit de validade ser 1, é hit
                 self.hit += 1
                 return
-
-        for via in range(self.assoc):
-            if self.val[index][via] == 0: # se o bit de validade é 0, adiciona um miss compulsório e o endereço na cache
-                self.val[index][via] = 1
-                self.tag[index][via] = tag
-                self.miss_cmpsr += 1
-                return
-            
-        # se val é 1, então foi miss por colisão ou capacidade
+  
         via = random.randint(0, self.assoc - 1) # substitui alguma via randomicamente
-        self.tag[index][via] = tag
-        self.miss_colis += 1
+        if self.val[index][via] == 0: # se val era 0, adiciona 1 miss compulsório
+            self.miss_cmpsr += 1
+        else:
+            self.miss_colis += 1 # se val era 1, então foi miss de colisão
+            
+        self.val[index][via] = 1 # atualiza o bit de validade
+        self.tag[index][via] = tag # atualiza a tag
 
 SimuladorCache()
